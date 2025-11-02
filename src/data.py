@@ -1,30 +1,34 @@
+import requests
+
+
 class DataLoader:
-    def __init__(self, datasetName: str, local=False):
+    def __init__(self, datasetName: str):
         self.datasetName = datasetName
-        self.local = local
         self.available = {
             "the-verdict": "https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/refs/heads/main/ch02/01_main-chapter-code/the-verdict.txt"
         }
 
     def load(self):
-        if self.local:
-            try:
-                with open(f".data/{self.datasetName}", "r") as file:
-                    raw = file.read()
-                    return raw
-            except (FileExistsError, FileNotFoundError) as e:
-                print("Error loading dataset ", e)
-        else:
-            # download from url into `.data`
-            import requests
+        if self.datasetName not in self.available:
+            print("Dataset not available.")
+            return None
 
-            if self.datasetName in self.available:
-                url = self.available[self.datasetName]
-                response = requests.get(url)
-                if response.status_code == 200:
-                    raw = response.text
-                    return raw
-                else:
-                    print("Error downloading dataset: ", response.status_code)
-            else:
-                print("Dataset not available.")
+        try:
+            with open(f".data/{self.datasetName}", "r") as file:
+                raw = file.read()
+                return raw
+        except (FileExistsError, FileNotFoundError):
+            print("Error loading dataset, not found! trying to download...")
+
+        # download from url into `.data`
+
+        url = self.available[self.datasetName]
+        response = requests.get(url)
+        if response.status_code == 200:
+            raw = response.text
+            with open(f".data/{self.datasetName}", "w") as file:
+                file.write(raw)
+            return raw
+        else:
+            print("Error downloading dataset: ", response.status_code)
+            return None
